@@ -1,68 +1,49 @@
-//Width and height
+var margin = {top: 100, right: 100, bottom: 100, left: 100};
 var w = 800;
 var h = 300;
 
-//Original data
 var dataset = [
-  [
-    { x: 0, y: 6 }
-  ],
-  [
-    { x: 0, y: 10 }
-  ],
-  [
-    { x: 0, y: 2 }
-  ],
-  [
-    { x: 0, y: 10 }
-  ],
-  [
-    { x: 0, y: 7 }
-  ]
+  {
+    start_date: '2014-01-01',
+    end_date: '2014-01-15'
+  },
+  {
+    start_date: '2014-02-01',
+    end_date: '2014-02-15'
+  }
 ];
 
-//Set up stack method
-var stack = d3.layout.stack();
+var format = d3.time.format("%Y-%m-%d");
 
-//data, stacked
-stack(dataset);
-
-//set up scales
-var xScale = d3.scale.linear()
-  .domain([0, xScaleMax()])
-  .range([0, w]);
-
-function xScaleMax() {
-  return d3.max(dataset, function(d) {
-    return d3.max(d, function(d) {
-      return d.y0 + d.y;
-    })
-  })
-}
-
-//Easy colors accessible via a 10-step ordinal scale
 var colors = d3.scale.category10();
 
-//Create SVG element
-var svg = d3.select('body')
-  .append('svg')
-  .attr('width', w)
-  .attr('height', h);
+var xScale = d3.time.scale()
+  .domain([new Date, new Date])
+  .nice(d3.time.year)
+  .range([0, w]);
 
-var group = svg.selectAll('g')
+var svg = d3.select('pricing-timeline').append('svg')
+  .attr('width', w + margin.left + margin.right)
+  .attr('height', h + margin.top + margin.bottom)
+  .append('g')
+  .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+svg.append('g')
+  .attr('class', 'x axis')
+  .call(d3.svg.axis().scale(xScale).orient('bottom'));
+
+var group = svg.append('g');
+
+group.selectAll('rect')
   .data(dataset)
   .enter()
-  .append('g')
+  .append('rect')
+  .attr('y', -22)
+  .attr('x', function(d) { return xScale(format.parse(d.start_date)); })
+  .attr('width', function(d) {
+    return xScale(format.parse(d.end_date)) - xScale(format.parse(d.start_date));
+  })
+  .attr('height', 20)
   .style('fill', function(d, i) {
     return colors(i);
   });
-
-//Add a rect for each data value
-var rects = group.selectAll('rect')
-  .data(function(d) { return d; })
-  .enter()
-  .append('rect')
-  .attr('x', function(d, i) { return xScale(d.y0); })
-  .attr('width', function(d) { return xScale(d.y); })
-  .attr('height', 20)
-  .attr('y', 0);
